@@ -31,12 +31,14 @@ jobs:
         id: cache-whisper
         uses: actions/cache@v4
         with:
-          path: whisper.cpp/build-apple/whisper.xcframework
+          path: ../whisper.cpp/build-apple/whisper.xcframework
           key: whisper-xcframework-${{ inputs.xcode }}
 
       - name: Build whisper.cpp (xcframework)
         if: steps.cache-whisper.outputs.cache-hit != 'true'
         run: |
+          set -euo pipefail
+          cd ..
           git clone --depth=1 https://github.com/ggerganov/whisper.cpp.git
           cd whisper.cpp
           ./build-xcframework.sh
