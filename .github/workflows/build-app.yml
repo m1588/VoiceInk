@@ -44,6 +44,11 @@ jobs:
           ./build-xcframework.sh
           test -d build-apple/whisper.xcframework
 
+      # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
+      # ensure the relative path is correct. Otherwise adjust linkage in the project.
+      - name: Resolve packages
+        run: xcodebuild -resolvePackageDependencies -scheme "${{ inputs.scheme }}"
+
       - name: Patch MediaRemoteAdapter for ARC bridging (Xcode 16+)
         run: |
           set -euo pipefail
@@ -58,11 +63,6 @@ jobs:
           sed -i '' -E 's/\(id\)(kMR[A-Za-z0-9_]+)/(__bridge id)\1/g' "$MR_FILE"
           sed -i '' -E 's/\(NSString \*\)(kMR[A-Za-z0-9_]+)/(__bridge NSString \*)\1/g' "$MR_FILE"
           echo "Patched: $MR_FILE"
-
-      # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
-      # ensure the relative path is correct. Otherwise adjust linkage in the project.
-      - name: Resolve packages
-        run: xcodebuild -resolvePackageDependencies -scheme "${{ inputs.scheme }}"
 
       - name: Build
         run: |
