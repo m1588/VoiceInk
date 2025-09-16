@@ -61,10 +61,7 @@ jobs:
             OTHER_CFLAGS="-O3 -DNDEBUG" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGN_IDENTITY="" \
-            DEVELOPMENT_TEAM="" \
             -quiet \
-            -allowProvisioningUpdates \
             clean build \
             BUILD_DIR=$PWD/build
 
