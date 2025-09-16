@@ -44,6 +44,21 @@ jobs:
           ./build-xcframework.sh
           test -d build-apple/whisper.xcframework
 
+      - name: Patch MediaRemoteAdapter for ARC bridging (Xcode 16+)
+        run: |
+          set -euo pipefail
+          MR_FILE="$(find "$HOME/Library/Developer/Xcode/DerivedData" \
+            -path "*/SourcePackages/checkouts/mediaremote-adapter/Sources/CIMediaRemote/MediaRemoteAdapter.m" \
+            -print -quit || true)"
+          if [[ -z "${MR_FILE:-}" ]]; then
+            echo "MediaRemoteAdapter.m not found"; exit 1
+          fi
+          # BSD sed (macOS): in-place edit with -i ''
+          # Cast CFStringRef → ObjC pointers with __bridge (no ownership change)
+          sed -i '' -E 's/\(id\)(kMR[A-Za-z0-9_]+)/(__bridge id)\1/g' "$MR_FILE"
+          sed -i '' -E 's/\(NSString \*\)(kMR[A-Za-z0-9_]+)/(__bridge NSString \*)\1/g' "$MR_FILE"
+          echo "Patched: $MR_FILE"
+
       # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
       # ensure the relative path is correct. Otherwise adjust linkage in the project.
       - name: Resolve packages
