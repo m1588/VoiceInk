@@ -64,6 +64,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
             -quiet \
+            -allowProvisioningUpdates \
             clean build \
             BUILD_DIR=$PWD/build
 
