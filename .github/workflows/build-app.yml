@@ -26,10 +26,22 @@ jobs:
         if: steps.cache-whisper.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          git clone --depth=1 https://github.com/ggerganov/whisper.cpp.git
+          if [ ! -d whisper.cpp ]; then
+            git clone --depth=1 https://github.com/ggerganov/whisper.cpp.git
+          fi
           cd whisper.cpp
           ./build-xcframework.sh
           test -d build-apple/whisper.xcframework
+
+      - name: Expose xcframework at expected path
+        run: |
+          set -euo pipefail
+          EXPECTED_PARENT_PATH="$GITHUB_WORKSPACE/../whisper.cpp"
+          # Remove any stale file/dir and create a symlink pointing to workspace copy
+          if [ -e "$EXPECTED_PARENT_PATH" ] || [ -L "$EXPECTED_PARENT_PATH" ]; then
+            rm -rf "$EXPECTED_PARENT_PATH"
+          fi
+          ln -s "$GITHUB_WORKSPACE/whisper.cpp" "$EXPECTED_PARENT_PATH"
 
       # Save cache even if later steps fail, but avoid overwriting an existing key
       - name: Save whisper.xcframework cache
