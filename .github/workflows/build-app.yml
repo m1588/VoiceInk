@@ -50,9 +50,10 @@ jobs:
           xcodebuild \
             -scheme "VoiceInk" \
             -configuration "Release" \
-            -destination "platform=macOS" \
+            -destination "platform=macOS,arch=arm64" \
             ONLY_ACTIVE_ARCH=NO ARCHS=arm64 VALID_ARCHS=arm64 \
             SWIFT_OPTIMIZATION_LEVEL=-O SWIFT_COMPILATION_MODE=wholemodule \
+            SWIFT_STRICT_CONCURRENCY=minimal \
             OTHER_CFLAGS="-O3 -DNDEBUG" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
