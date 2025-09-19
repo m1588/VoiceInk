@@ -268,12 +268,17 @@ class WhisperState: NSObject, ObservableObject {
 
             let transcriptionStart = Date()
             var text = try await transcriptionService.transcribe(audioURL: url, model: model)
+            text = WhisperHallucinationFilter.filter(text)
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
             
             if await checkCancellationAndCleanup() { return }
             
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            
+
+            if UserDefaults.standard.object(forKey: "IsTextFormattingEnabled") as? Bool ?? true {
+                text = WhisperTextFormatter.format(text)
+            }
+
             if UserDefaults.standard.bool(forKey: "IsWordReplacementEnabled") {
                 text = WordReplacementService.shared.applyReplacements(to: text)
             }

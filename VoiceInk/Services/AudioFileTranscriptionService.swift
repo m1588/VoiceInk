@@ -60,8 +60,13 @@ class AudioTranscriptionService: ObservableObject {
             }
             
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
+            text = WhisperHallucinationFilter.filter(text)
             text = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            
+
+            if UserDefaults.standard.object(forKey: "IsTextFormattingEnabled") as? Bool ?? true {
+                text = WhisperTextFormatter.format(text)
+            }
+
             // Apply word replacements if enabled
             if UserDefaults.standard.bool(forKey: "IsWordReplacementEnabled") {
                 text = WordReplacementService.shared.applyReplacements(to: text)
