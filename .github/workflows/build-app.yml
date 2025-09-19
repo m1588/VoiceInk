@@ -26,15 +26,16 @@ jobs:
         with:
           xcode-version: ${{ inputs.xcode }}
 
-      # Cache the prebuilt xcframework to speed up subsequent manual runs
-      - name: Cache whisper.xcframework
+      # Restore the prebuilt xcframework cache to speed up subsequent manual runs
+      - name: Restore whisper.xcframework cache
         id: cache-whisper
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: ../whisper.cpp/build-apple/whisper.xcframework
           key: whisper-xcframework-${{ inputs.xcode }}
 
       - name: Build whisper.cpp (xcframework)
+        id: build-whisper
         if: steps.cache-whisper.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
@@ -43,6 +44,14 @@ jobs:
           cd whisper.cpp
           ./build-xcframework.sh
           test -d build-apple/whisper.xcframework
+
+      # Save cache even if later steps fail, but avoid overwriting an existing key
+      - name: Save whisper.xcframework cache
+        if: always() && !cancelled() && steps.cache-whisper.outputs.cache-hit != 'true' && steps.build-whisper.outcome == 'success'
+        uses: actions/cache/save@v4
+        with:
+          path: ../whisper.cpp/build-apple/whisper.xcframework
+          key: whisper-xcframework-${{ inputs.xcode }}
 
       # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
       # ensure the relative path is correct. Otherwise adjust linkage in the project.
