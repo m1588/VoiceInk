@@ -2,19 +2,6 @@ name: macOS Build (manual)
 
 on:
   workflow_dispatch:
-    inputs:
-      xcode:
-        description: Xcode version
-        required: true
-        default: '16.4'
-      scheme:
-        description: Xcode scheme
-        required: true
-        default: 'VoiceInk'
-      configuration:
-        description: Build configuration
-        required: true
-        default: 'Release'
 
 jobs:
   build:
@@ -24,22 +11,21 @@ jobs:
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: ${{ inputs.xcode }}
+          xcode-version: '16.4'
 
       # Restore the prebuilt xcframework cache to speed up subsequent manual runs
       - name: Restore whisper.xcframework cache
         id: cache-whisper
         uses: actions/cache/restore@v4
         with:
-          path: ../whisper.cpp/build-apple/whisper.xcframework
-          key: whisper-xcframework-${{ inputs.xcode }}
+          path: whisper.cpp/build-apple/whisper.xcframework
+          key: whisper-xcframework-16.4
 
       - name: Build whisper.cpp (xcframework)
         id: build-whisper
         if: steps.cache-whisper.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          cd ..
           git clone --depth=1 https://github.com/ggerganov/whisper.cpp.git
           cd whisper.cpp
           ./build-xcframework.sh
@@ -50,35 +36,20 @@ jobs:
         if: always() && !cancelled() && steps.cache-whisper.outputs.cache-hit != 'true' && steps.build-whisper.outcome == 'success'
         uses: actions/cache/save@v4
         with:
-          path: ../whisper.cpp/build-apple/whisper.xcframework
-          key: whisper-xcframework-${{ inputs.xcode }}
+          path: whisper.cpp/build-apple/whisper.xcframework
+          key: whisper-xcframework-16.4
 
       # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
       # ensure the relative path is correct. Otherwise adjust linkage in the project.
       - name: Resolve packages
-        run: xcodebuild -resolvePackageDependencies -scheme "${{ inputs.scheme }}"
-
-      - name: Patch MediaRemoteAdapter for ARC bridging (Xcode 16+)
-        run: |
-          set -euo pipefail
-          MR_FILE="$(find "$HOME/Library/Developer/Xcode/DerivedData" \
-            -path "*/SourcePackages/checkouts/mediaremote-adapter/Sources/CIMediaRemote/MediaRemoteAdapter.m" \
-            -print -quit || true)"
-          if [[ -z "${MR_FILE:-}" ]]; then
-            echo "MediaRemoteAdapter.m not found"; exit 1
-          fi
-          # BSD sed (macOS): in-place edit with -i ''
-          # Cast CFStringRef → ObjC pointers with __bridge (no ownership change)
-          sed -i '' -E 's/\(id\)(kMR[A-Za-z0-9_]+)/(__bridge id)\1/g' "$MR_FILE"
-          sed -i '' -E 's/\(NSString \*\)(kMR[A-Za-z0-9_]+)/(__bridge NSString \*)\1/g' "$MR_FILE"
-          echo "Patched: $MR_FILE"
+        run: xcodebuild -resolvePackageDependencies -scheme "VoiceInk"
 
       - name: Build
         run: |
           set -euo pipefail
           xcodebuild \
-            -scheme "${{ inputs.scheme }}" \
-            -configuration "${{ inputs.configuration }}" \
+            -scheme "VoiceInk" \
+            -configuration "Release" \
             -destination "platform=macOS" \
             ONLY_ACTIVE_ARCH=NO ARCHS=arm64 VALID_ARCHS=arm64 \
             SWIFT_OPTIMIZATION_LEVEL=-O SWIFT_COMPILATION_MODE=wholemodule \
@@ -92,10 +63,10 @@ jobs:
       - name: Package .app
         run: |
           APP_PATH="$(/usr/bin/find build -name '*.app' -maxdepth 5 | head -n 1)"
-          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "${{ inputs.scheme }}.zip"
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "VoiceInk.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.scheme }}-macOS
-          path: ${{ inputs.scheme }}.zip
+          name: VoiceInk-macOS
+          path: VoiceInk.zip
