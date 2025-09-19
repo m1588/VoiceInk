@@ -11,7 +11,7 @@ jobs:
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: '26.0'
 
       # Restore the prebuilt xcframework cache to speed up subsequent manual runs
       - name: Restore whisper.xcframework cache
@@ -19,7 +19,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: whisper.cpp/build-apple/whisper.xcframework
-          key: whisper-xcframework-16.4
+          key: whisper-xcframework-26.0
 
       - name: Build whisper.cpp (xcframework)
         id: build-whisper
@@ -49,7 +49,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: whisper.cpp/build-apple/whisper.xcframework
-          key: whisper-xcframework-16.4
+          key: whisper-xcframework-26.0
 
       # If your Xcode project expects the xcframework at ../whisper.cpp/build-apple,
       # ensure the relative path is correct. Otherwise adjust linkage in the project.
